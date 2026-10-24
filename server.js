@@ -8,21 +8,74 @@ const Database = require("better-sqlite3");
 const bcrypt = require("bcryptjs");
 const helmet = require("helmet");
 const path = require("path");
+const crypto = require("crypto");
+
+// =====================================================
+// SEBY FOLDER — SERVER
+// =====================================================
 
 const app = express();
-const db = new Database("seby-folder.db");
+app.disable("x-powered-by");
 
-if (!process.env.SESSION_SECRET ||
-    process.env.SESSION_SECRET.includes("CHANGE_THIS")) {
-  throw new Error("Configurez SESSION_SECRET dans .env");
+// Render sèvi ak yon proxy devan aplikasyon an.
+app.set("trust proxy", 1);
+
+const PUBLIC_DIR = path.join(__dirname, "public");
+const INDEX_FILE = path.join(PUBLIC_DIR, "index.html");
+
+// =====================================================
+// ENVIRONMENT VARIABLES
+// =====================================================
+
+const SESSION_SECRET = process.env.SESSION_SECRET;
+const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "")
+  .trim()
+  .toLowerCase();
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+
+if (!SESSION_SECRET || SESSION_SECRET.length < 32) {
+  throw new Error(
+    "Configurez SESSION_SECRET avec au moins 32 caractères dans Render."
+  );
 }
 
-if (!process.env.ADMIN_PASSWORD ||
-    process.env.ADMIN_PASSWORD.includes("CHANGE_THIS")) {
-  throw new Error("Configurez ADMIN_PASSWORD dans .env");
+if (
+  !ADMIN_EMAIL ||
+  !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ADMIN_EMAIL)
+) {
+  throw new Error(
+    "Configurez une adresse ADMIN_EMAIL valide dans Render."
+  );
 }
+
+if (
+  !ADMIN_PASSWORD ||
+  ADMIN_PASSWORD.includes("CHANGE_THIS") ||
+  ADMIN_PASSWORD.length < 12
+) {
+  throw new Error(
+    "Configurez ADMIN_PASSWORD avec au moins 12 caractères dans Render."
+  );
+}
+
+// =====================================================
+// DATABASE
+// =====================================================
+
+// Pour Render, DB_PATH peut pointer vers un disque persistant.
+// Par défaut, la base est créée dans le dossier du projet.
+const DB_PATH = process.env.DB_PATH ||
+  path.join(__dirname, "seby-folder.db");
+
+const SESSION_DB_DIR = process.env.SESSION_DB_DIR ||
+  path.dirname(DB_PATH);
+
+const SESSION_DB_NAME = "sessions.db";
+
+const db = new Database(DB_PATH);
 
 db.pragma("journal_mode = WAL");
+db.pragma("foreign_keys = ON");
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (
@@ -36,6 +89,10 @@ db.exec(`
   );
 `);
 
+// =====================================================
+// CONFIGURATION
+// =====================================================
+
 const countries = {
   "Haïti": "+509",
   "Togo": "+228",
@@ -46,39 +103,62 @@ const countries = {
   "Nigeria": "+234"
 };
 
-app.disable("x-powered-by");
-app.use(helmet({
-  contentSecurityPolicy: false
-}));
+// =====================================================
+// MIDDLEWARE
+// =====================================================
+
+app.use(
+  helmet({
+    contentSecurityPolicy: false
+  })
+);
+
 app.use(express.json({ limit: "20kb" }));
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: false, limit: "20kb" }));
 
-app.use(session({
-  name: "sebyfolder.sid",
-  secret: process.env.SESSION_SECRET,
-  resave: false,
-  saveUninitialized: false,
-  store: new SQLiteStore({
-    db: "sessions.db",
-    dir: "."
-  }),
-  cookie: {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    maxAge: 1000 * 60 * 60 * 24
-  }
-}));
+app.use(
+  session({
+    name: "sebyfolder.sid",
+    secret: SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
 
-app.use(express.static(path.join(__dirname, "public")));
+    store: new SQLiteStore({
+      db: SESSION_DB_NAME,
+      dir: SESSION_DB_DIR
+    }),
+
+    cookie: {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 24 * 60 * 60 * 1000
+    }
+  })
+);
+
+// =====================================================
+// WEBSITE — PUBLIC FILES AND HOME PAGE
+// =====================================================
+
+app.use(express.static(PUBLIC_DIR));
 
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+  res.sendFile(INDEX_FILE, (err) => {
+    if (err) {
+      console.error("Impossible de charger public/index.html :", err);
+      if (!res.headersSent) {
+        res.status(500).send(
+          "SEBY FOLDER : index.html introuvable dans le dossier public."
+        );
+      }
+    }
+  });
 });
 
-
-
-const adminEmail = process.env.ADMIN_EMAIL.toLowerCase();
+// =====================================================
+// HELPERS
+// =====================================================
 
 function clean(value) {
   return typeof value === "string" ? value.trim() : "";
@@ -98,6 +178,7 @@ function requireUser(req, res, next) {
       error: "Veuillez vous connecter."
     });
   }
+
   next();
 }
 
@@ -107,8 +188,46 @@ function requireAdmin(req, res, next) {
       error: "Accès administrateur requis."
     });
   }
+
   next();
 }
+
+function regenerateSession(req, res, next, callback) {
+  req.session.regenerate((err) => {
+    if (err) {
+      console.error("Erreur de session :", err);
+
+      return res.status(500).json({
+        error: "Erreur de session."
+      });
+    }
+
+    callback();
+  });
+}
+
+function safePasswordCompare(input, expected) {
+  const a = Buffer.from(String(input));
+  const b = Buffer.from(String(expected));
+
+  if (a.length !== b.length) {
+    return false;
+  }
+
+  return crypto.timingSafeEqual(a, b);
+}
+
+// =====================================================
+// API STATUS
+// =====================================================
+
+app.get("/api/health", (req, res) => {
+  res.json({
+    success: true,
+    service: "SEBY FOLDER",
+    status: "online"
+  });
+});
 
 app.get("/api/config", (req, res) => {
   res.json({
@@ -122,15 +241,21 @@ app.get("/api/config", (req, res) => {
   });
 });
 
+// =====================================================
+// USER REGISTRATION
+// =====================================================
+
 app.post("/api/register", async (req, res) => {
   try {
     const name = clean(req.body.name);
     const country = clean(req.body.country);
     const email = clean(req.body.email).toLowerCase();
     const phone = normalizePhone(req.body.phone);
-    const password = typeof req.body.password === "string"
-      ? req.body.password
-      : "";
+
+    const password =
+      typeof req.body.password === "string"
+        ? req.body.password
+        : "";
 
     if (name.length < 2 || name.length > 80) {
       return res.status(400).json({
@@ -144,17 +269,20 @@ app.post("/api/register", async (req, res) => {
       });
     }
 
-    if ((!email && !phone) ||
-        (email && !validEmail(email)) ||
-        (phone && !/^\+[1-9]\d{7,14}$/.test(phone))) {
+    if (
+      (!email && !phone) ||
+      (email && !validEmail(email)) ||
+      (phone && !/^\+[1-9]\d{7,14}$/.test(phone))
+    ) {
       return res.status(400).json({
-        error: "Entrez un e-mail valide ou un numéro international avec indicatif."
+        error:
+          "Entrez un e-mail valide ou un numéro international avec indicatif."
       });
     }
 
     if (password.length < 10 || password.length > 200) {
       return res.status(400).json({
-        error: "Le mot de passe doit contenir au moins 10 caractères."
+        error: "Le mot de passe doit contenir entre 10 et 200 caractères."
       });
     }
 
@@ -178,22 +306,26 @@ app.post("/api/register", async (req, res) => {
       hash
     );
 
-    req.session.regenerate(err => {
-      if (err) {
-        return res.status(500).json({
-          error: "Erreur de session."
-        });
-      }
-
+    regenerateSession(req, res, null, () => {
       req.session.user = {
         id: Number(result.lastInsertRowid),
         name,
         country
       };
 
-      res.status(201).json({
-        message: "Inscription réussie.",
-        user: req.session.user
+      req.session.save((err) => {
+        if (err) {
+          console.error("Erreur sauvegarde session :", err);
+
+          return res.status(500).json({
+            error: "Impossible de sauvegarder la session."
+          });
+        }
+
+        res.status(201).json({
+          message: "Inscription réussie.",
+          user: req.session.user
+        });
       });
     });
   } catch (error) {
@@ -203,49 +335,82 @@ app.post("/api/register", async (req, res) => {
       });
     }
 
-    console.error(error);
+    console.error("Erreur inscription :", error);
+
     res.status(500).json({
       error: "Une erreur est survenue."
     });
   }
 });
 
+// =====================================================
+// USER LOGIN
+// =====================================================
+
 app.post("/api/login", (req, res) => {
-  const identifier = clean(req.body.identifier).toLowerCase();
-  const password = typeof req.body.password === "string"
-    ? req.body.password
-    : "";
+  try {
+    const identifier = clean(req.body.identifier).toLowerCase();
 
-  const user = db.prepare(`
-    SELECT * FROM users
-    WHERE lower(email) = ? OR phone = ?
-  `).get(identifier, normalizePhone(identifier));
+    const password =
+      typeof req.body.password === "string"
+        ? req.body.password
+        : "";
 
-  if (!user || !bcrypt.compareSync(password, user.password_hash)) {
-    return res.status(401).json({
-      error: "Identifiants incorrects."
-    });
-  }
-
-  req.session.regenerate(err => {
-    if (err) {
-      return res.status(500).json({
-        error: "Erreur de session."
+    if (!identifier || !password) {
+      return res.status(400).json({
+        error: "Entrez votre identifiant et votre mot de passe."
       });
     }
 
-    req.session.user = {
-      id: user.id,
-      name: user.name,
-      country: user.country
-    };
+    const user = db.prepare(`
+      SELECT id, name, country, phone, email, password_hash
+      FROM users
+      WHERE lower(email) = ? OR phone = ?
+    `).get(identifier, normalizePhone(identifier));
 
-    res.json({
-      message: "Connexion réussie.",
-      user: req.session.user
+    if (
+      !user ||
+      !bcrypt.compareSync(password, user.password_hash)
+    ) {
+      return res.status(401).json({
+        error: "Identifiants incorrects."
+      });
+    }
+
+    regenerateSession(req, res, null, () => {
+      req.session.user = {
+        id: user.id,
+        name: user.name,
+        country: user.country
+      };
+
+      req.session.save((err) => {
+        if (err) {
+          console.error("Erreur sauvegarde session :", err);
+
+          return res.status(500).json({
+            error: "Impossible de sauvegarder la session."
+          });
+        }
+
+        res.json({
+          message: "Connexion réussie.",
+          user: req.session.user
+        });
+      });
     });
-  });
+  } catch (error) {
+    console.error("Erreur connexion :", error);
+
+    res.status(500).json({
+      error: "Une erreur est survenue."
+    });
+  }
 });
+
+// =====================================================
+// CURRENT USER
+// =====================================================
 
 app.get("/api/me", (req, res) => {
   res.json({
@@ -253,31 +418,70 @@ app.get("/api/me", (req, res) => {
   });
 });
 
+// =====================================================
+// USER LOGOUT
+// =====================================================
+
 app.post("/api/logout", (req, res) => {
-  req.session.destroy(() => {
-    res.clearCookie("sebyfolder.sid");
-    res.json({ message: "Déconnexion réussie." });
+  req.session.destroy((err) => {
+    if (err) {
+      console.error("Erreur déconnexion :", err);
+
+      return res.status(500).json({
+        error: "Erreur lors de la déconnexion."
+      });
+    }
+
+    res.clearCookie("sebyfolder.sid", {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production"
+    });
+
+    res.json({
+      message: "Déconnexion réussie."
+    });
   });
 });
 
-app.get("/api/members/count", (req, res) => {
-  const result = db.prepare(
-    "SELECT COUNT(*) AS total FROM users"
-  ).get();
+// =====================================================
+// PUBLIC MEMBER COUNT
+// =====================================================
 
-  res.json({ total: result.total });
+app.get("/api/members/count", (req, res) => {
+  try {
+    const result = db.prepare(
+      "SELECT COUNT(*) AS total FROM users"
+    ).get();
+
+    res.json({
+      total: result.total
+    });
+  } catch (error) {
+    console.error("Erreur comptage membres :", error);
+
+    res.status(500).json({
+      error: "Impossible de compter les membres."
+    });
+  }
 });
+
+// =====================================================
+// ADMIN LOGIN
+// =====================================================
 
 app.post("/api/admin/login", (req, res) => {
   const email = clean(req.body.email).toLowerCase();
-  const password = typeof req.body.password === "string"
-    ? req.body.password
-    : "";
 
-  const emailMatches = email === adminEmail;
-  const passwordMatches = bcrypt.compareSync(
+  const password =
+    typeof req.body.password === "string"
+      ? req.body.password
+      : "";
+
+  const emailMatches = email === ADMIN_EMAIL;
+  const passwordMatches = safePasswordCompare(
     password,
-    bcrypt.hashSync(process.env.ADMIN_PASSWORD, 12)
+    ADMIN_PASSWORD
   );
 
   if (!emailMatches || !passwordMatches) {
@@ -286,68 +490,193 @@ app.post("/api/admin/login", (req, res) => {
     });
   }
 
-  req.session.regenerate(err => {
-    if (err) {
-      return res.status(500).json({
-        error: "Erreur de session."
+  regenerateSession(req, res, null, () => {
+    req.session.admin = true;
+
+    req.session.save((err) => {
+      if (err) {
+        console.error("Erreur session admin :", err);
+
+        return res.status(500).json({
+          error: "Impossible de sauvegarder la session."
+        });
+      }
+
+      res.json({
+        message: "Connexion administrateur réussie."
+      });
+    });
+  });
+});
+
+// =====================================================
+// ADMIN — LIST MEMBERS
+// =====================================================
+
+app.get(
+  "/api/admin/members",
+  requireAdmin,
+  (req, res) => {
+    try {
+      const members = db.prepare(`
+        SELECT id, name, country, phone, email, created_at
+        FROM users
+        ORDER BY id DESC
+        LIMIT 500
+      `).all();
+
+      res.json({ members });
+    } catch (error) {
+      console.error("Erreur liste membres :", error);
+
+      res.status(500).json({
+        error: "Impossible de charger les membres."
+      });
+    }
+  }
+);
+
+// =====================================================
+// ADMIN — DELETE MEMBER
+// =====================================================
+
+app.delete(
+  "/api/admin/members/:id",
+  requireAdmin,
+  (req, res) => {
+    const id = Number(req.params.id);
+
+    if (!Number.isSafeInteger(id) || id < 1) {
+      return res.status(400).json({
+        error: "Identifiant invalide."
       });
     }
 
-    req.session.admin = true;
-    res.json({ message: "Connexion administrateur réussie." });
+    try {
+      const result = db.prepare(
+        "DELETE FROM users WHERE id = ?"
+      ).run(id);
+
+      if (!result.changes) {
+        return res.status(404).json({
+          error: "Membre introuvable."
+        });
+      }
+
+      res.json({
+        message: "Membre supprimé."
+      });
+    } catch (error) {
+      console.error("Erreur suppression membre :", error);
+
+      res.status(500).json({
+        error: "Impossible de supprimer le membre."
+      });
+    }
+  }
+);
+
+// =====================================================
+// ADMIN — LOGOUT
+// =====================================================
+
+app.post(
+  "/api/admin/logout",
+  requireAdmin,
+  (req, res) => {
+    req.session.destroy((err) => {
+      if (err) {
+        console.error("Erreur déconnexion admin :", err);
+
+        return res.status(500).json({
+          error: "Erreur lors de la déconnexion."
+        });
+      }
+
+      res.clearCookie("sebyfolder.sid", {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production"
+      });
+
+      res.json({
+        message: "Déconnexion administrateur réussie."
+      });
+    });
+  }
+);
+
+// =====================================================
+// ADMIN — STATISTICS
+// =====================================================
+
+app.get(
+  "/api/admin/stats",
+  requireAdmin,
+  (req, res) => {
+    try {
+      const total = db.prepare(
+        "SELECT COUNT(*) AS total FROM users"
+      ).get().total;
+
+      res.json({ total });
+    } catch (error) {
+      console.error("Erreur statistiques :", error);
+
+      res.status(500).json({
+        error: "Impossible de charger les statistiques."
+      });
+    }
+  }
+);
+
+// =====================================================
+// 404 — API AND UNKNOWN ROUTES
+// =====================================================
+
+app.use("/api", (req, res) => {
+  res.status(404).json({
+    error: "Route API introuvable."
   });
 });
 
-app.get("/api/admin/members", requireAdmin, (req, res) => {
-  const members = db.prepare(`
-    SELECT id, name, country, phone, email, created_at
-    FROM users
-    ORDER BY id DESC
-    LIMIT 500
-  `).all();
-
-  res.json({ members });
+app.use((req, res) => {
+  res.status(404).send("Page introuvable.");
 });
 
-app.delete("/api/admin/members/:id", requireAdmin, (req, res) => {
-  const id = Number(req.params.id);
+// =====================================================
+// ERROR HANDLER
+// =====================================================
 
-  if (!Number.isSafeInteger(id) || id < 1) {
-    return res.status(400).json({
-      error: "Identifiant invalide."
-    });
+app.use((error, req, res, next) => {
+  console.error("Erreur serveur :", error);
+
+  if (res.headersSent) {
+    return next(error);
   }
 
-  const result = db.prepare(
-    "DELETE FROM users WHERE id = ?"
-  ).run(id);
-
-  if (!result.changes) {
-    return res.status(404).json({
-      error: "Membre introuvable."
-    });
-  }
-
-  res.json({ message: "Membre supprimé." });
-});
-
-app.post("/api/admin/logout", requireAdmin, (req, res) => {
-  req.session.destroy(() => {
-    res.clearCookie("sebyfolder.sid");
-    res.json({ message: "Déconnexion administrateur réussie." });
+  res.status(500).json({
+    error: "Erreur interne du serveur."
   });
 });
 
-app.get("/api/admin/stats", requireAdmin, (req, res) => {
-  const total = db.prepare(
-    "SELECT COUNT(*) AS total FROM users"
-  ).get().total;
-
-  res.json({ total });
-});
+// =====================================================
+// START SERVER
+// =====================================================
 
 const port = Number(process.env.PORT) || 3000;
 
-app.listen(port, "0.0.0.0", () => {
-  console.log("SEBY FOLDER lancé sur le port " + port);
+const server = app.listen(port, "0.0.0.0", () => {
+  console.log("=================================");
+  console.log("SEBY FOLDER est lancé.");
+  console.log("Port :", port);
+  console.log("Dossier public :", PUBLIC_DIR);
+  console.log("Page index :", INDEX_FILE);
+  console.log("Base de données :", DB_PATH);
+  console.log("=================================");
+});
+
+server.on("error", (error) => {
+  console.error("Impossible de démarrer le serveur :", error);
+  process.exit(1);
 });
