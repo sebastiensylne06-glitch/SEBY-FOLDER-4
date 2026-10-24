@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0a0f0c">
+  <meta name="description" content="Créez votre compte SEBY FOLDER 2026.">
+  <title>Inscription | SEBY FOLDER 2026</title>
+
+  <link rel="stylesheet" href="/style.css">
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #080d0a;
+      color: #f5fff7;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .register-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 35px 16px;
+      background:
+        radial-gradient(ellipse at top, rgba(157, 255, 183, .13), transparent 55%),
+        #080d0a;
+    }
+
+    .register-card {
+      width: 100%;
+      max-width: 490px;
+      padding: 32px 26px;
+      background: #111914;
+      border: 1px solid rgba(173, 255, 192, .2);
+      border-radius: 22px;
+      box-shadow: 0 20px 65px rgba(0, 0, 0, .4);
+    }
+
+    .brand {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .brand-icon {
+      width: 65px;
+      height: 65px;
+      margin: 0 auto 14px;
+      display: grid;
+      place-items: center;
+      border-radius: 20px;
+      background: #baffc8;
+      color: #07140b;
+      font-size: 28px;
+      font-weight: 900;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 25px;
+      letter-spacing: 1px;
+    }
+
+    .brand h1 span {
+      color: #a9ffbd;
+    }
+
+    .brand p {
+      margin: 10px 0 0;
+      color: #a2afa5;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .register-card h2 {
+      margin: 0 0 8px;
+      font-size: 23px;
+    }
+
+    .intro {
+      margin: 0 0 23px;
+      color: #a2afa5;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .form-group {
+      margin-bottom: 17px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #e7f5e9;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      min-height: 48px;
+      padding: 13px 14px;
+      color: #f5fff7;
+      background: #0a100c;
+      border: 1px solid #303d33;
+      border-radius: 11px;
+      outline: none;
+      font-size: 15px;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      border-color: #a9ffbd;
+      box-shadow: 0 0 0 3px rgba(169, 255, 189, .1);
+    }
+
+    .form-group input::placeholder {
+      color: #748078;
+    }
+
+    .form-group select option {
+      background: #111914;
+      color: white;
+    }
+
+    .phone-row {
+      display: grid;
+      grid-template-columns: 145px minmax(0, 1fr);
+      gap: 9px;
+    }
+
+    .hint {
+      display: block;
+      margin-top: 7px;
+      color: #8e9c91;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .terms {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+      margin: 18px 0;
+      color: #aab7ad;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .terms input {
+      margin-top: 4px;
+      accent-color: #a9ffbd;
+    }
+
+    .terms a,
+    .bottom-link a {
+      color: #a9ffbd;
+      text-decoration: none;
+    }
+
+    .submit-btn {
+      width: 100%;
+      min-height: 50px;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      background: #baffc8;
+      color: #07140b;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform .2s, background .2s;
+    }
+
+    .submit-btn:hover {
+      background: #d0ffda;
+      transform: translateY(-1px);
+    }
+
+    .submit-btn:disabled {
+      opacity: .65;
+      cursor: wait;
+      transform: none;
+    }
+
+    .message {
+      display: none;
+      margin: 15px 0;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .message.error {
+      display: block;
+      background: rgba(255, 75, 75, .1);
+      border: 1px solid rgba(255, 75, 75, .35);
+      color: #ffaaaa;
+    }
+
+    .message.success {
+      display: block;
+      background: rgba(169, 255, 189, .1);
+      border: 1px solid rgba(169, 255, 189, .3);
+      color: #baffc8;
+    }
+
+    .bottom-link {
+      margin: 22px 0 0;
+      text-align: center;
+      color: #a2afa5;
+      font-size: 14px;
+    }
+
+    .back-home {
+      display: block;
+      margin-top: 18px;
+      text-align: center;
+      color: #a2afa5;
+      font-size: 13px;
+      text-decoration: none;
+    }
+
+    .back-home:hover {
+      color: #baffc8;
+    }
+
+    @media (max-width: 380px) {
+      .register-card {
+        padding: 25px 17px;
+      }
+
+      .phone-row {
+        grid-template-columns: 125px minmax(0, 1fr);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="register-page">
+    <section class="register-card">
+
+      <header class="brand">
+        <div class="brand-icon">SF</div>
+        <h1>SEBY <span>FOLDER</span></h1>
+        <p>SEBY FOLDER 2026 — Créez votre compte en quelques étapes.</p>
+      </header>
+
+      <h2>Créer un compte</h2>
+      <p class="intro">
+        Inscrivez-vous pour rejoindre SEBY FOLDER 2026.
+        Remplissez les informations ci-dessous.
+      </p>
+
+      <form id="registerForm" novalidate>
+        <div class="form-group">
+          <label for="name">Nom complet</label>
+          <input
+            id="name"
+            name="name"
+            type="text"
+            placeholder="Votre nom complet"
+            autocomplete="name"
+            minlength="2"
+            maxlength="100"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="country">Pays</label>
+          <select id="country" name="country" required>
+            <option value="">Sélectionnez votre pays</option>
+            <option value="Togo">Togo</option>
+            <option value="Haïti">Haïti</option>
+            <option value="États-Unis">États-Unis</option>
+            <option value="Canada">Canada</option>
+            <option value="Brésil">Brésil</option>
+            <option value="France">France</option>
+            <option value="Nigeria">Nigeria</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="phone">Numéro de téléphone</label>
+          <div class="phone-row">
+            <select id="phoneCode" name="phoneCode" aria-label="Indicatif téléphonique">
+              <option value="+228">Togo (+228)</option>
+              <option value="+509" selected>Haïti (+509)</option>
+              <option value="+1">États-Unis/Canada (+1)</option>
+              <option value="+55">Brésil (+55)</option>
+              <option value="+33">France (+33)</option>
+              <option value="+234">Nigeria (+234)</option>
+            </select>
+
+            <input
+              id="phone"
+              name="phone"
+              type="tel"
+              placeholder="Numéro"
+              autocomplete="tel-national"
+              inputmode="tel"
+            >
+          </div>
+          <small class="hint">
+            Vous pouvez renseigner votre téléphone, votre e-mail, ou les deux.
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label for="email">Adresse e-mail</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            placeholder="exemple@email.com"
+            autocomplete="email"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="password">Mot de passe</label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            placeholder="Minimum 8 caractères"
+            autocomplete="new-password"
+            minlength="8"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="confirmPassword">Confirmer le mot de passe</label>
+          <input
+            id="confirmPassword"
+            name="confirmPassword"
+            type="password"
+            placeholder="Répétez votre mot de passe"
+            autocomplete="new-password"
+            minlength="8"
+            required
+          >
+        </div>
+
+        <label class="terms">
+          <input id="terms" name="terms" type="checkbox" required>
+          <span>
+            J'accepte les conditions d'utilisation et la politique de confidentialité.
+          </span>
+        </label>
+
+        <div id="formMessage" class="message" role="status" aria-live="polite"></div>
+
+        <button class="submit-btn" id="registerBtn" type="submit">
+          Créer mon compte
+        </button>
+      </form>
+
+      <p class="bottom-link">
+        Vous avez déjà un compte ?
+        <a href="/login.html">Se connecter</a>
+      </p>
+
+      <a class="back-home" href="/">← Retour à l'accueil</a>
+    </section>
+  </main>
+
+  <script src="/register.js" defer></script>
+</body>
+</html>

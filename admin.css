@@ -1,0 +1,115 @@
+
+.admin-container {
+  width: min(1200px, 92%);
+  margin: 45px auto 70px;
+  min-height: 60vh;
+}
+
+.admin-login {
+  max-width: 480px;
+  margin: 40px auto;
+  text-align: left;
+}
+
+.admin-login form label {
+  display: block;
+  margin-top: 16px;
+  color: #dce9df;
+}
+
+.admin-login input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 13px;
+  margin-top: 7px;
+  color: #fff;
+  background: #111914;
+  border: 1px solid rgba(183,247,200,.25);
+  border-radius: 10px;
+}
+
+.admin-login button {
+  width: 100%;
+  margin-top: 22px;
+}
+
+.admin-heading,
+.admin-panel-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+
+.admin-heading h1 {
+  margin: 10px 0;
+  font-size: clamp(28px, 5vw, 42px);
+}
+
+.admin-heading p { color: #9ca9a0; }
+
+.admin-stat {
+  margin: 28px 0;
+  padding: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border: 1px solid rgba(183,247,200,.2);
+  border-radius: 18px;
+  background: linear-gradient(135deg,#14251a,#0c120e);
+}
+
+.admin-stat span { color: #c5d2c8; }
+.admin-stat strong { color: #b7f7c8; font-size: 38px; }
+
+.admin-panel {
+  padding: 22px;
+  background: #111914;
+  border: 1px solid rgba(183,247,200,.16);
+  border-radius: 18px;
+}
+
+.admin-panel h2 { margin-top: 0; }
+
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  margin-top: 20px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 850px;
+  font-size: 13px;
+}
+
+th, td {
+  padding: 13px;
+  text-align: left;
+  border-bottom: 1px solid rgba(183,247,200,.12);
+}
+
+th { color: #b7f7c8; }
+td { color: #e6eee8; }
+
+.delete-member {
+  color: #fff;
+  background: #8c2929;
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 11px;
+  cursor: pointer;
+}
+
+.delete-member:hover { background: #b83737; }
+
+[hidden] { display: none !important; }
+
+@media (max-width: 600px) {
+  .admin-container { margin-top: 25px; }
+  .admin-panel { padding: 14px; }
+  .admin-stat strong { font-size: 30px; }
+}

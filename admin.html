@@ -1,0 +1,101 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#b7f7c8">
+  <title>Administration | SEBY FOLDER</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/admin.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/">
+      <span class="brand-icon">SF</span>
+      <span>SEBY FOLDER<small>ADMINISTRATION</small></span>
+    </a>
+    <a href="/">Voir le site ↗</a>
+  </header>
+
+  <main class="admin-container">
+    <section id="adminLogin" class="support-card admin-login">
+      <span class="eyebrow">ESPACE PRIVÉ</span>
+      <h1>Administration</h1>
+      <p>Connectez-vous pour gérer les membres.</p>
+
+      <form id="adminLoginForm">
+        <label for="adminEmail">Adresse e-mail administrateur</label>
+        <input id="adminEmail" type="email" required
+          autocomplete="username" placeholder="admin@sebyfolder.com">
+
+        <label for="adminPassword">Mot de passe administrateur</label>
+        <input id="adminPassword" type="password" required
+          autocomplete="current-password" placeholder="Votre mot de passe">
+
+        <button class="btn btn-primary" type="submit">
+          Se connecter
+        </button>
+        <p id="adminLoginMessage" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section id="adminDashboard" hidden>
+      <div class="admin-heading">
+        <div>
+          <span class="eyebrow">TABLEAU DE BORD</span>
+          <h1>Gestion des membres</h1>
+          <p>Bienvenue dans votre espace d'administration.</p>
+        </div>
+        <button id="adminLogout" class="btn btn-outline">
+          Déconnexion
+        </button>
+      </div>
+
+      <article class="admin-stat">
+        <span>Total des membres enregistrés</span>
+        <strong id="adminMemberCount">0</strong>
+      </article>
+
+      <section class="admin-panel">
+        <div class="admin-panel-heading">
+          <h2>Personnes inscrites</h2>
+          <button id="refreshMembers" class="btn btn-primary">
+            Actualiser
+          </button>
+        </div>
+
+        <p id="adminMessage" role="status" aria-live="polite"></p>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nom</th>
+                <th>Pays</th>
+                <th>Téléphone</th>
+                <th>E-mail</th>
+                <th>Inscription</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="membersTable">
+              <tr>
+                <td colspan="7">Connectez-vous pour afficher les membres.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <footer>
+    <span>SEBY FOLDER</span>
+    <span>© SEBY FOLDER 2026</span>
+  </footer>
+
+  <script src="/admin.js"></script>
+</body>
+</html>
