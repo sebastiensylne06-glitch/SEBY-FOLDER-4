@@ -1,0 +1,90 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#b7f7c8">
+  <title>Connexion | SEBY FOLDER</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/">
+      <span class="brand-icon">SF</span>
+      <span>SEBY FOLDER<small>ESPACE MEMBRE</small></span>
+    </a>
+    <a href="/">Accueil</a>
+  </header>
+
+  <main class="section">
+    <div class="support-card" style="max-width:480px;margin:auto">
+      <span class="eyebrow">BON RETOUR</span>
+      <h2>Connexion</h2>
+      <p>Accédez à votre espace personnel.</p>
+
+      <form id="loginForm" style="text-align:left;margin-top:25px">
+        <label for="identifier">Numéro de téléphone ou e-mail</label>
+        <input
+          id="identifier"
+          name="identifier"
+          type="text"
+          required
+          autocomplete="username"
+          placeholder="+509... ou vous@exemple.com"
+        >
+
+        <label for="password">Mot de passe</label>
+        <input
+          id="password"
+          name="password"
+          type="password"
+          required
+          autocomplete="current-password"
+          placeholder="Votre mot de passe"
+        >
+
+        <button class="btn btn-primary" type="submit"
+          style="width:100%;margin-top:22px">
+          Se connecter
+        </button>
+
+        <p id="loginMessage" role="status" aria-live="polite"></p>
+      </form>
+
+      <p>Pas encore de compte ?
+        <a href="/register.html">Créer un compte</a>
+      </p>
+
+      <p><a href="/#support">Aide et support</a></p>
+    </div>
+  </main>
+
+  <style>
+    form label {
+      display:block;
+      margin-top:16px;
+      color:#dce9df;
+      font-size:14px;
+    }
+
+    form input {
+      width:100%;
+      box-sizing:border-box;
+      padding:14px;
+      margin-top:6px;
+      color:#fff;
+      background:#111914;
+      border:1px solid rgba(183,247,200,.25);
+      border-radius:10px;
+      outline:none;
+    }
+
+    form input:focus {
+      border-color:#b7f7c8;
+    }
+  </style>
+
+  <script src="/login.js"></script>
+</body>
+</html>
